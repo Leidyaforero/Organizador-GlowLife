@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'glowlife-v3';
+const CACHE_NAME = 'glowlife-v4';
 
 const APP_FILES = [
   './',
@@ -7,16 +7,15 @@ const APP_FILES = [
   './manifest.json'
 ];
 
-// Instalar nueva versión
+// Instalar archivos básicos
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(APP_FILES))
-      .then(() => self.skipWaiting())
   );
 });
 
-// Activar nueva versión y eliminar cachés antiguas
+// Activar la nueva versión y limpiar cachés anteriores
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
@@ -34,7 +33,14 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Consultar primero la versión publicada en Internet
+// Esperar a que la persona acepte la actualización
+self.addEventListener('message', event => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Navegación y archivos: primero Internet, luego caché
 self.addEventListener('fetch', event => {
   const request = event.request;
 
@@ -42,31 +48,27 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(request.url);
 
-  // No interceptar archivos de otros dominios
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
     (async () => {
-      const cache = await caches.open(CACHE_NAME);
-
       try {
         const response = await fetch(request);
 
         if (response.ok) {
-          event.waitUntil(
-            cache.put(request, response.clone()).catch(() => {})
-          );
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(request, response.clone()).catch(() => {});
         }
 
         return response;
 
       } catch (error) {
-        const cached = await cache.match(request);
+        const cached = await caches.match(request);
 
         if (cached) return cached;
 
         if (request.mode === 'navigate') {
-          return await cache.match('./index.html') ||
+          return await caches.match('./index.html') ||
             Response.error();
         }
 
