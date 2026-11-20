@@ -1,25 +1,77 @@
-const V = 'glowlife-v2';
-const FILES = ['./', './index.html', './manifest.json'];
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(V).then(c => c.addAll(FILES)));
-  self.skipWaiting();
+const CACHE_NAME = 'glowlife-v3';
+
+const APP_FILES = [
+  './',
+  './index.html',
+  './manifest.json'
+];
+
+// Instalar nueva versión
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(APP_FILES))
+      .then(() => self.skipWaiting())
+  );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+// Activar nueva versión y eliminar cachés antiguas
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys =>
+        Promise.all(
+          keys
+            .filter(key =>
+              key.startsWith('glowlife-') &&
+              key !== CACHE_NAME
+            )
+            .map(key => caches.delete(key))
+        )
+      )
+      .then(() => self.clients.claim())
+  );
 });
 
-// Red primero: si hay internet, siempre se descarga la versión más nueva.
-// Si no hay internet, responde desde la caché (funciona sin conexión).
-self.addEventListener('fetch', e => {
-  // Solo se guardan en caché archivos propios de la app (GET del mismo origen).
-  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
-  e.respondWith(
-    fetch(e.request).then(r => {
-      const cp = r.clone();
-      caches.open(V).then(c => c.put(e.request, cp));
-      return r;
-    }).catch(() => caches.match(e.request))
+// Consultar primero la versión publicada en Internet
+self.addEventListener('fetch', event => {
+  const request = event.request;
+
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+
+  // No interceptar archivos de otros dominios
+  if (url.origin !== self.location.origin) return;
+
+  event.respondWith(
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      try {
+        const response = await fetch(request);
+
+        if (response.ok) {
+          event.waitUntil(
+            cache.put(request, response.clone()).catch(() => {})
+          );
+        }
+
+        return response;
+
+      } catch (error) {
+        const cached = await cache.match(request);
+
+        if (cached) return cached;
+
+        if (request.mode === 'navigate') {
+          return await cache.match('./index.html') ||
+            Response.error();
+        }
+
+        return Response.error();
+      }
+    })()
   );
 });
