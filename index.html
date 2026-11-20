@@ -171,7 +171,153 @@ async function bio(){try{await navigator.credentials.get({publicKey:{challenge:c
 function forgot(){if(confirm('Si olvidaste tu clave se borrarán TODOS tus datos de este dispositivo. ¿Continuar?')){S=def();LK={};UN=false;try{localStorage.removeItem(K);localStorage.removeItem(LKEY)}catch(e){}render()}}
 document.addEventListener('keydown',e=>{if(e.key=='Enter'&&['lp','lp2'].includes(document.activeElement.id))LK.h?unlock():setPw()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)UN=false;else if(S.tab=='fin')render()});
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+
+/* ===== Actualizaciones inteligentes de GlowLife ===== */
+
+if ('serviceWorker' in navigator) {
+
+  let refreshing = false;
+  let waitingWorker = null;
+
+  // Crear aviso de actualización
+  const updateBox = document.createElement('div');
+
+  updateBox.id = 'gl-update-box';
+
+  updateBox.innerHTML = `
+    <div style="
+      position:fixed;
+      left:16px;
+      right:16px;
+      bottom:100px;
+      z-index:9999;
+      max-width:520px;
+      margin:auto;
+      padding:16px;
+      border-radius:18px;
+      background:#ffffff;
+      color:#3b2d78;
+      box-shadow:0 8px 30px rgba(0,0,0,.18);
+      border:1px solid #d9ccfa;
+      font-family:system-ui,sans-serif;
+    ">
+      <div style="font-weight:700;font-size:15px">
+        ✨ ¡GlowLife tiene una nueva versión!
+      </div>
+
+      <p style="font-size:13px;margin:7px 0 12px">
+        Hay mejoras disponibles para tu aplicación.
+      </p>
+
+      <button id="gl-update-button" style="
+        width:100%;
+        padding:12px;
+        border:0;
+        border-radius:10px;
+        background:#9d8ae8;
+        color:white;
+        font-weight:700;
+        font-size:14px;
+      ">
+        Actualizar ahora
+      </button>
+
+      <button id="gl-update-later" style="
+        width:100%;
+        padding:9px;
+        margin-top:5px;
+        border:0;
+        background:transparent;
+        color:#7a7390;
+      ">
+        Más tarde
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(updateBox);
+  updateBox.style.display = 'none';
+
+  function showUpdate(worker) {
+    waitingWorker = worker;
+    updateBox.style.display = 'block';
+  }
+
+  // Aceptar actualización
+  document.getElementById('gl-update-button')
+    .addEventListener('click', () => {
+
+      if (waitingWorker) {
+        waitingWorker.postMessage('SKIP_WAITING');
+      }
+    });
+
+  // Posponer actualización
+  document.getElementById('gl-update-later')
+    .addEventListener('click', () => {
+      updateBox.style.display = 'none';
+    });
+
+  // Recargar cuando la nueva versión tome el control
+  navigator.serviceWorker.addEventListener(
+    'controllerchange',
+    () => {
+      if (refreshing) return;
+
+      refreshing = true;
+      window.location.reload();
+    }
+  );
+
+  // Registrar aplicación
+  navigator.serviceWorker.register('./sw.js', {
+    updateViaCache: 'none'
+  }).then(registration => {
+
+    // Comprobar si ya hay una actualización esperando
+    if (registration.waiting &&
+        navigator.serviceWorker.controller) {
+      showUpdate(registration.waiting);
+    }
+
+    // Detectar nuevas versiones
+    registration.addEventListener('updatefound', () => {
+
+      const newWorker = registration.installing;
+
+      if (!newWorker) return;
+
+      newWorker.addEventListener('statechange', () => {
+
+        if (
+          newWorker.state === 'installed' &&
+          navigator.serviceWorker.controller
+        ) {
+          showUpdate(newWorker);
+        }
+      });
+    });
+
+    // Buscar actualizaciones
+    registration.update().catch(() => {});
+
+    // Revisar al volver a la aplicación
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        registration.update().catch(() => {});
+      }
+    });
+
+    // Revisar al recuperar conexión
+    window.addEventListener('online', () => {
+      registration.update().catch(() => {});
+    });
+
+  }).catch(error => {
+    console.error('Error al registrar GlowLife:', error);
+  });
+}
+
 /* ===== Cronómetro ajustable + alarma ===== */
 let AC,AL=0;T.left=S.pm*60;
 const sp=n=>{S.pm=Math.max(5,Math.min(120,n));T.left=S.pm*60;save();render()};
