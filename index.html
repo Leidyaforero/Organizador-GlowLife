@@ -206,4 +206,4 @@ function goalsV(){return `<div class="row sp" style="margin:0 20px 12px"><h1 sty
 const pc2=b=>{document.querySelectorAll('.sw button').forEach(x=>x.classList.remove('on'));b.classList.add('on')};
 function dg(id){if(!confirm('¿Eliminar esta meta? Sus tareas se conservan sin meta.'))return;S.goals=S.goals.filter(g=>g.id!=id);S.tasks.forEach(x=>{if(x.g==id)x.g=''});S.events.forEach(x=>{if(x.g==id)x.g=''});save();render()}
 render();
-</script></body></html>
+</script></body></html> 
