@@ -1,10 +1,10 @@
-const CACHE_NAME = 'glowlife-v7';
+const CACHE_NAME = 'glowlife-v8';
 
 const APP_FILES = [
   './',
   './index.html',
   './manifest.json',
-  './css/glow.css'
+  './css/glow.css?v=8'
 ];
 
 // Instalar archivos básicos
@@ -53,7 +53,7 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     (async () => {
       try {
-        const response = await fetch(request);
+        const response = await fetch(request, { cache: 'no-cache' });
 
         if (response.ok) {
           const cache = await caches.open(CACHE_NAME);
@@ -63,7 +63,7 @@ self.addEventListener('fetch', event => {
         return response;
 
       } catch (error) {
-        const cached = await caches.match(request);
+        const cached = await caches.match(request, { ignoreSearch: true });
 
         if (cached) return cached;
 
