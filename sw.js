@@ -1,10 +1,10 @@
-const CACHE_NAME = 'glowlife-v8';
+const CACHE_NAME = 'glowlife-v9';
 
 const APP_FILES = [
   './',
   './index.html',
   './manifest.json',
-  './css/glow.css?v=8'
+  './css/glow.css?v=9'
 ];
 
 // Instalar archivos básicos
