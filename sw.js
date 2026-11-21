@@ -4,7 +4,7 @@ const APP_FILES = [
   './',
   './index.html',
   './manifest.json',
-  './css/glow.css?v=9'
+  './css/glow.css'
 ];
 
 // Instalar archivos básicos
@@ -53,7 +53,7 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     (async () => {
       try {
-        const response = await fetch(request, { cache: 'no-cache' });
+        const response = await fetch(request);
 
         if (response.ok) {
           const cache = await caches.open(CACHE_NAME);
@@ -63,7 +63,7 @@ self.addEventListener('fetch', event => {
         return response;
 
       } catch (error) {
-        const cached = await caches.match(request, { ignoreSearch: true });
+        const cached = await caches.match(request);
 
         if (cached) return cached;
 
