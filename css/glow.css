@@ -108,3 +108,8 @@ label{display:grid;gap:4px;font:600 12px var(--fb);color:var(--mu)}.f2{display:g
 .it.row{flex-wrap:wrap}.it .g1{flex:1 1 150px}
 
 .bar i.near{background:#F5B94A}.bar i.over{background:var(--bad)}.tb{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}.tb th{color:var(--mu);font-weight:600;text-align:right}.tb td{text-align:right;padding:7px 0;border-top:1px solid var(--bd)}.tb td:first-child,.tb th:first-child{text-align:left}
+
+.tcol{width:62px;flex:none;font-size:12px;line-height:1.3;color:var(--mu)}.mg>.mu{font-size:11px}
+
+/* 8 · NOTAS */
+.qa{grid-template-columns:repeat(5,1fr)!important;gap:6px!important}.qa button{font-size:11px!important}.snav .ls,.tabbar .lf{display:none}.tabbar button{font-size:9.5px}
