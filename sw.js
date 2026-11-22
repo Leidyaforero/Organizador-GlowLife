@@ -1,4 +1,4 @@
-const CACHE_NAME = 'glowlife-v9';
+const CACHE_NAME = 'glowlife-v12';
 
 const APP_FILES = [
   './',
